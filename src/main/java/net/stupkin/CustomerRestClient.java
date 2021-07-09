@@ -9,12 +9,12 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.servlet.function.ServerRequest;
+
 
 import java.util.List;
 
 @Component
-public class Communication {
+public class CustomerRestClient {
 
     private final RestTemplate restTemplate;
     private final String URL = "http://91.241.64.178:7081/api/users";
@@ -23,7 +23,7 @@ public class Communication {
     private String code = "";
 
     @Autowired
-    public Communication(RestTemplate restTemplate) {
+    public CustomerRestClient(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
 
@@ -39,10 +39,19 @@ public class Communication {
         return users;
     }
 
+    public User[] getUsersInArray() {
+        ResponseEntity<User[]> responseEntity = restTemplate.getForEntity(URL, User[].class);
+        User[] users = responseEntity.getBody();
+        JSESSIONID = responseEntity.getHeaders().get("Set-Cookie").get(0);
+        headers.add("Cookie", JSESSIONID);
+
+        return users;
+    }
+
+
     public void saveUser(User user) {
-            ResponseEntity<String> responseEntity = restTemplate.exchange(URL
-                    , HttpMethod.POST
-                    , new HttpEntity<User>(user, headers)
+            ResponseEntity<String> responseEntity = restTemplate.postForEntity(URL
+                    , new HttpEntity<>(user, headers)
                     , String.class);
 
             System.out.println("New user was added to DB");
@@ -52,7 +61,7 @@ public class Communication {
     public void updateUser(User user) {
         ResponseEntity<String> responseEntity = restTemplate.exchange(URL
                 , HttpMethod.PUT
-                , new HttpEntity<User>(user, headers)
+                , new HttpEntity<>(user, headers)
                 , String.class);
         System.out.println("User with ID " + user.getId() + " was updated");
         code += responseEntity.getBody();
